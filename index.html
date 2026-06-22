@@ -8,6 +8,8 @@
     <meta name="theme-color" content="#1e293b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="QuizGen">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #475569 0%, #334155 100%); min-height: 100vh; padding: 20px; }
@@ -152,6 +154,10 @@
             <p>Tạo bài kiểm tra ngẫu nhiên - Hỗ trợ nhúng sẵn câu hỏi</p>
             <div id="installPrompt" style="display:none; margin-top:12px;">
                 <button class="btn btn-success" id="installBtn" style="padding:10px 24px; font-size:1em;">📲 Cài đặt ứng dụng (PWA)</button>
+            </div>
+            <div id="iosInstallPrompt" style="display:none; margin-top:12px; padding:12px; background:linear-gradient(135deg,#818cf820,#a78bfa20); border:2px solid #818cf8; border-radius:12px; text-align:center;">
+                <div style="font-size:0.95em; font-weight:700; color:#818cf8; margin-bottom:6px;">📲 Cài đặt ứng dụng</div>
+                <div style="font-size:0.85em; color:#cbd5e1;">Mở bằng <strong style="color:#86efac;">Safari</strong> → Nhấn nút <strong style="color:#fcd34d;">Share ↗</strong> → <strong style="color:#fcd34d;">Add to Home Screen</strong></div>
             </div>
         </div>
         <div class="card upload-section" id="uploadCard">
@@ -1108,6 +1114,14 @@ updateWrongCountDisplay();
       let deferredPrompt = null;
       const installPrompt = document.getElementById('installPrompt');
       const installBtn = document.getElementById('installBtn');
+
+      // iOS detection — show Safari instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const iosPrompt = document.getElementById('iosInstallPrompt');
+      if (isIOS) {
+        iosPrompt.style.display = 'block';
+        installPrompt.style.display = 'none'; // hide Android button on iOS
+      }
 
       // Bắt giữ beforeinstallprompt để hiện nút cài đặt
       window.addEventListener('beforeinstallprompt', (e) => {
