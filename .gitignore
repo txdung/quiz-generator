@@ -1,0 +1,27 @@
+# Excel source files (large, not needed for web)
+*.xls
+*.xlsx
+
+# Graphify output (generated)
+graphify-out/
+
+# Memory & docs
+memory/
+MEMORY.md
+graphify-out/
+
+# Build scripts (local only)
+rebuild.py
+rebuild2.py
+add_radar.js
+
+# Question JSON (large, embedded in HTML already)
+all_questions.json
+
+# Session notes
+SESSION_*.md
+CHANGES_LOG.md
+PROJECT_SUMMARY.md
+
+# Pi agent internals
+.pi/
