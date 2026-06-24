@@ -354,13 +354,13 @@
                                 <!-- Collapsible header -->
                 <div class="sheet-toggle-header" onclick="toggleSheetSection()">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <span class="sheet-toggle-arrow" id="sheetToggleArrow">▼</span>
+                        <span class="sheet-toggle-arrow collapsed" id="sheetToggleArrow">▼</span>
                         <span style="font-size:0.9em;font-weight:600;color:#cbd5e1;">📋 Chọn sheet làm bài</span>
                     </div>
-                    <span style="font-size:0.8em;color:#818cf8;">Nhấn để thu gọn</span>
+                    <span style="font-size:0.8em;color:#818cf8;">Nhấn để mở rộng</span>
                 </div>
-                <!-- Collapsible content -->
-                <div class="sheet-content" id="sheetContent" style="max-height:2000px;opacity:1;">
+                <!-- Collapsible content (collapsed by default) -->
+                <div class="sheet-content collapsed" id="sheetContent" style="max-height:0 !important;opacity:0;padding:0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                     <div style="font-size: 0.85em; color: #94a3b8;">Tick vào các sheet muốn làm quiz</div>
                     <div style="display: flex; gap: 8px;">
