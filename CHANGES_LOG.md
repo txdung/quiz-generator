@@ -105,10 +105,10 @@
 
 | Phần thi | Câu hỏi | Ghi chú |
 |----------|---------|----------|
-| 📡 VHF | 390 | Tăng từ 340 (fix rebuild) |
+| 📡 VHF | 340 | (R&S S5200 sheet bị skip theo yêu cầu) |
 | 📟 Radar | 324 | PSR 98 + SSR 176 + Indra 50 |
 | 🎖️ Kíp Trưởng | 238 | Radar Sơn Trà |
-| **Tổng** | **952** | |
+| **Tổng** | **902** | |
 
 ---
 
