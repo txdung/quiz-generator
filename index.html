@@ -1560,24 +1560,25 @@ updateWrongCountDisplay();
 
       function exportCorrections() {
         if (correctionLog.length === 0) { alert('Không có corrections để export!'); return; }
-        // Group by mode for clarity
-        const grouped = {};
-        correctionLog.forEach(c => {
-            if (!grouped[c.mode]) grouped[c.mode] = [];
-            grouped[c.mode].push({
-                pattern: c.question.substring(0, 60) + '...*',
-                new_correct: c.corrected,
-                note: c.mode + ' #' + c.number + ' [' + c.sheet + '] original=' + c.original
-            });
-        });
-        const json = JSON.stringify(grouped, null, 2);
+        // Export in corrections.json format for rebuild.py
+        const exports = correctionLog.map(c => ({
+          pattern: c.question.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '.*',
+          new_correct: c.corrected,
+          note: c.mode.toUpperCase() + ' #' + c.number + ' [' + c.sheet + '] sửa: ' + c.original + ' → ' + c.corrected
+        }));
+        const output = {
+          description: 'Corrections exported from Quiz Generator UI - ' + new Date().toLocaleString('vi-VN'),
+          fixes: exports
+        };
+        const json = JSON.stringify(output, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'corrections_export.json';
+        a.download = 'corrections_from_ui.json';
         a.click();
         URL.revokeObjectURL(url);
+        alert('✅ Đã export corrections.json!\n\nCách dùng:\n1. Mở corrections.json gốc trong project\n2. Copy "fixes" từ file export vào corrections.json\n3. Chạy rebuild.py\n4. Embed lại all_questions.json vào index.html');
       }
 
       function importCorrections(event) {
