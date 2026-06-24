@@ -215,6 +215,20 @@
             .search-result-item { padding: 6px 10px; font-size: 0.82em; }
         }
         
+        /* Collapsible sheet section */
+        .sheet-toggle-header {
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; padding: 8px 0; user-select: none;
+        }
+        .sheet-toggle-header:hover { opacity: 0.85; }
+        .sheet-toggle-arrow {
+            transition: transform 0.3s; display: inline-block;
+            color: #818cf8; font-size: 0.85em;
+        }
+        .sheet-toggle-arrow.collapsed { transform: rotate(-90deg); }
+        .sheet-content { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; }
+        .sheet-content.collapsed { max-height: 0 !important; opacity: 0; padding: 0; }
+        
         /* Correction reporting */
         .correction-report-btn {
             background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
@@ -337,15 +351,26 @@
             </div>
             
                         <div id="sheetSelectionBox" style="display: none; margin: 15px 0; padding: 15px; background: #0f172a; border: 2px solid #334155; border-radius: 12px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 8px;">
+                                <!-- Collapsible header -->
+                <div class="sheet-toggle-header" onclick="toggleSheetSection()">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="sheet-toggle-arrow" id="sheetToggleArrow">▼</span>
+                        <span style="font-size:0.9em;font-weight:600;color:#cbd5e1;">📋 Chọn sheet làm bài</span>
+                    </div>
+                    <span style="font-size:0.8em;color:#818cf8;">Nhấn để thu gọn</span>
+                </div>
+                <!-- Collapsible content -->
+                <div class="sheet-content" id="sheetContent" style="max-height:2000px;opacity:1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                     <div style="font-size: 0.85em; color: #94a3b8;">Tick vào các sheet muốn làm quiz</div>
                     <div style="display: flex; gap: 8px;">
-                        <button onclick="toggleAllModeSheets(true)" style="background: none; border: 1px solid #818cf8; color: #818cf8; cursor: pointer; padding: 4px 12px; border-radius: 15px; font-size: 0.8em; font-weight: 600;">Chọn tất cả</button>
-                        <button onclick="toggleAllModeSheets(false)" style="background: none; border: 1px solid #818cf8; color: #818cf8; cursor: pointer; padding: 4px 12px; border-radius: 15px; font-size: 0.8em; font-weight: 600;">Bỏ chọn tất cả</button>
+                        <button onclick="event.stopPropagation(); toggleAllModeSheets(true)" style="background: none; border: 1px solid #818cf8; color: #818cf8; cursor: pointer; padding: 4px 12px; border-radius: 15px; font-size: 0.8em; font-weight: 600;">Chọn tất cả</button>
+                        <button onclick="event.stopPropagation(); toggleAllModeSheets(false)" style="background: none; border: 1px solid #818cf8; color: #818cf8; cursor: pointer; padding: 4px 12px; border-radius: 15px; font-size: 0.8em; font-weight: 600;">Bỏ chọn tất cả</button>
                     </div>
                 </div>
                 <div id="sheetGroupContainer"></div>
                 <div id="selectedCountDisplay" style="margin-top: 10px; padding: 8px 12px; background: linear-gradient(135deg, #818cf820, #a78bfa20); border-radius: 8px; font-weight: 600; color: #818cf8; text-align: center;">✅ 0 câu hỏi sẽ thi</div>
+                </div>
             </div>
             
             <!-- BƯỚC 3: Cấu hình -->
@@ -1338,6 +1363,21 @@ function toggleAllModeSheets(selectAll) {
     });
     renderSheetGroups();
     updateTotal();
+}
+
+function toggleSheetSection() {
+    const content = document.getElementById('sheetContent');
+    const arrow = document.getElementById('sheetToggleArrow');
+    content.classList.toggle('collapsed');
+    arrow.classList.toggle('collapsed');
+    // Update hint text
+    const header = content.previousElementSibling;
+    const hint = header.querySelector('span:last-child');
+    if (content.classList.contains('collapsed')) {
+        hint.textContent = 'Nhấn để mở rộng';
+    } else {
+        hint.textContent = 'Nhấn để thu gọn';
+    }
 }
 
 
