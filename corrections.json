@@ -15,6 +15,16 @@
       "pattern": "RXG.*Ngu",
       "new_correct": "C",
       "note": "Indra question about RXG source — answer key corrected"
+    },
+    {
+      "pattern": "rơle anten cổng COM được nối",
+      "new_correct": "C",
+      "note": "Kíp Trưởng #22 — COM relay antenna connection — answer corrected"
+    },
+    {
+      "pattern": "Thẩm quyền ban hành quyết định đưa vào khai",
+      "new_correct": "B",
+      "note": "Kíp Trưởng #230 — Authority to operational decision — answer corrected"
     }
   ]
 }
