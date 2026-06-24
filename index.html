@@ -525,9 +525,23 @@ function getTotalQuestions() {
     return questions.length;
 }
 
+function applyCorrections(questions) {
+    // Apply user-reported corrections from localStorage
+    questions.forEach(q => {
+        const key = q.mode + '_' + q.sheet + '_' + q.number;
+        const correction = correctionLog.find(c => c.key === key);
+        if (correction) {
+            q.correct = correction.corrected;
+            q.correctKey = correction.corrected;
+            console.log('[Correction] #' + q.number + ' ' + q.sheet + ': ' + correction.original + ' → ' + correction.corrected);
+        }
+    });
+}
+
 function getActiveQuestions() {
     const noRepeat = document.getElementById('noRepeatCheckbox') && document.getElementById('noRepeatCheckbox').checked;
     let questions = [...embeddedQuestions].filter(q => q.mode === currentMode && getActiveSheetSelection().has(q.sheet));
+    applyCorrections(questions);
     if (noRepeat) {
         questions = questions.filter(q => !doneQuestionKeys.has(q.mode + '_' + q.sheet + '_' + q.number));
     }
@@ -658,6 +672,7 @@ function startQuizFromSearch() {
     totalQuizCount = quizQuestions.length;
     userAnswers = [];
     currentQuestionIndex = 0;
+    applyCorrections(quizQuestions);
     quizQuestions.forEach(function(q) { q.displayOptions = { A: q.options.A, B: q.options.B, C: q.options.C, D: q.options.D }; q.correctKey = q.correct; });
     const modeTitleMap = { vhf: 'VHF', radar: 'Radar', kip_truong: 'Kíp Trưởng' };
     document.getElementById('currentModeTitle').textContent = modeTitleMap[currentMode] + ' (Tìm kiếm)';
@@ -1398,6 +1413,7 @@ function startPracticeWrong() {
     totalQuizCount = quizQuestions.length;
     userAnswers = [];
     currentQuestionIndex = 0;
+    applyCorrections(quizQuestions);
     quizQuestions.forEach(function(q) { q.displayOptions = { A: q.options.A, B: q.options.B, C: q.options.C, D: q.options.D }; q.correctKey = q.correct; });
     const modeTitleMap = { vhf: 'VHF', radar: 'Radar', kip_truong: 'Kíp Trưởng' };
     document.getElementById('currentModeTitle').textContent = modeTitleMap[currentMode] || 'VHF' + ' (Luyện tập)';
@@ -1472,10 +1488,14 @@ updateWrongCountDisplay();
             correctionLog.push(correction);
         }
         localStorage.setItem('correctionLog', JSON.stringify(correctionLog));
+        // Remove from wrongQuestionKeys since we fixed it
+        wrongQuestionKeys.delete(q.mode + '_' + q.sheet + '_' + q.number);
+        localStorage.setItem('wrongQuestionKeys', JSON.stringify([...wrongQuestionKeys]));
+        updateWrongCountDisplay();
         closeCorrectionModal();
         // Refresh review to show "Đã báo"
         buildReview();
-        alert('✅ Đã ghi nhận! Bạn có thể export corrections.json khi cần.');
+        alert('✅ Đã ghi nhận & fix! Câu này sẽ được loại khỏi "Luyện tập câu sai".');
       }
 
       function exportCorrections() {
