@@ -1520,6 +1520,74 @@ updateWrongCountDisplay();
         URL.revokeObjectURL(url);
       }
 
+      function importCorrections(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                let imported = 0;
+                let updated = 0;
+                
+                // Support two formats: flat array or grouped by mode
+                let flatData = [];
+                if (Array.isArray(data)) {
+                    flatData = data;
+                } else if (typeof data === 'object') {
+                    // Grouped format: { vhf: [...], radar: [...] }
+                    Object.values(data).forEach(modeArr => {
+                        if (Array.isArray(modeArr)) {
+                            modeArr.forEach(item => flatData.push(item));
+                        }
+                    });
+                }
+                
+                flatData.forEach(item => {
+                    // Flatten format: { question, new_correct, note, ... }
+                    if (item.question && item.new_correct) {
+                        const correction = {
+                            key: item.note || '', // note might contain the key
+                            number: item.number || 0,
+                            sheet: item.sheet || '',
+                            mode: item.mode || '',
+                            original: item.original || '?',
+                            corrected: item.new_correct,
+                            question: item.question,
+                            timestamp: new Date().toISOString()
+                        };
+                        // Try to extract key from note
+                        if (!correction.key && item.note) {
+                            // Extract pattern "mode #N [sheet]"
+                            const match = item.note.match(/^(\w+)\s+#(\d+)\s+\[([^\]]+)\]/);
+                            if (match) {
+                                correction.key = match[1] + '_' + match[3] + '_' + match[2];
+                            }
+                        }
+                        const existingIdx = correctionLog.findIndex(c => c.key === correction.key);
+                        if (existingIdx >= 0) {
+                            correctionLog[existingIdx] = correction;
+                            updated++;
+                        } else {
+                            correctionLog.push(correction);
+                            imported++;
+                        }
+                    }
+                });
+                
+                localStorage.setItem('correctionLog', JSON.stringify(correctionLog));
+                openCorrectionsPanel(); // Refresh list
+                alert('✅ Import thành công!\n📥 Thêm mới: ' + imported + '\n✏️ Cập nhật: ' + updated + '\n📊 Tổng: ' + correctionLog.length);
+                updateWrongCountDisplay();
+            } catch(err) {
+                alert('❌ Lỗi đọc file: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+        // Reset file input so same file can be re-imported
+        event.target.value = '';
+      }
+
       function clearCorrections() {
         if (confirm('Xóa toàn bộ lịch sử báo đáp án sai?')) {
             correctionLog = [];
@@ -1642,6 +1710,8 @@ updateWrongCountDisplay();
       </div>
       <div id="correctionsList"></div>
       <div style="margin-top:16px;padding-top:12px;border-top:1px solid #334155;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="document.getElementById('importFileInput').click()" style="padding:8px 16px;font-size:0.9em;">📥 Import corrections.json</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importCorrections(event)">
         <button class="btn btn-danger" onclick="exportCorrections()" style="padding:8px 16px;font-size:0.9em;">📤 Export corrections.json</button>
         <button class="btn btn-secondary" onclick="clearCorrections()" style="padding:8px 16px;font-size:0.9em;">🗑️ Xóa lịch sử</button>
       </div>
