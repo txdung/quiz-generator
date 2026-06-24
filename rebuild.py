@@ -391,7 +391,12 @@ def run(verify_only=False):
             if fpath.endswith('.xls'):
                 # VHF: multi-sheet, each sheet is a separate group
                 wb = pd.ExcelFile(fpath, engine='xlrd')
+                # Sheets to skip (not included in the web app)
+                skip_sheets = {'R&S S5200 VR VT'}
                 for sname in wb.sheet_names:
+                    if sname in skip_sheets:
+                        print(f'  ⊘ Skipping sheet: {sname}')
+                        continue
                     df = pd.read_excel(fpath, engine='xlrd', sheet_name=sname)
                     label = sname
                     process_df(df, item['mode'], label, all_questions,
