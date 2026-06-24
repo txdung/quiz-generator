@@ -87,13 +87,46 @@
 - Xóa scripts cũ: `rebuild2.py`, `rebuild_v3.py`
 - Cập nhật `.gitignore` — ignore `__pycache__`, OS files, debug dirs
 
+### 15. 🔍 Tìm kiếm + Bộ lọc (24/06/2026)
+- Search bar xuất hiện sau khi chọn mode VHF/Radar/Kíp Trưởng
+- Real-time search với debounce 300ms
+- Tìm trong cả question text và options
+- Highlight từ khóa khớp (mark tags)
+- Scrollable results list (max 200 results hiển thị)
+- Click để toggle selection (checkbox per result)
+- Nút "🚀 Làm quiz từ kết quả" — chỉ quiz các câu đã chọn
+- Mobile responsive (max-height 200px)
+
+### 16. ⚠️ Báo đáp án sai trong review (24/06/2026)
+- Button "⚠️ Báo đáp án sai" xuất hiện trên câu sai/chưa làm trong review
+- Modal với radio buttons A/B/C/D để chọn đáp án đúng
+- Lưu vào `correctionLog` (localStorage)
+- "✓ Đã báo" badge sau khi report (per session)
+- Tự động xóa khỏi danh sách "Luyện tập câu sai"
+- Nút "⚠️ Corrections" trong menu chính → xem/dump corrections
+- **📤 Export** → `corrections_from_ui.json` (format rebuild.py compatible)
+- **📥 Import** → merge corrections từ file JSON vào localStorage
+- Corrections auto-apply vào quiz (hàm `applyCorrections()`)
+
+### 17. Collapsible Sheet Selection (24/06/2026)
+- Section "Chọn sheet làm bài" mặc định thu gọn
+- Click header để toggle mở/đóng
+- Animation mượt (max-height transition 0.3s)
+- Arrow indicator xoay -90deg/0deg
+- Nút "Chọn tất cả / Bỏ chọn tất cả" vẫn hoạt động khi đóng
+- event.stopPropagation() trên buttons
+
+### 18. Sửa đáp án Kíp Trưởng (24/06/2026)
+- **#22**: rơle anten cổng COM → **C** (Anten phát) [trước: A]
+- **#230**: Thẩm quyền ban hành quyết định → **B** (Tổng Giám đốc) [trước: D]
+- Thêm vào corrections.json → rebuild → embed vào index.html
+
 ---
 
 ## ❌ Chưa làm (vẫn trong danh sách)
 
 - 📤 Export kết quả ra PDF/Excel
-- 🔍 Tìm kiếm câu hỏi
-- ⏰ Chế độ ngẫu nhiên tất cả 952 câu
+- ⏰ Chế độ ngẫu nhiên tất cả 902 câu (3 mode trộn lẫn)
 - 👥 Chế độ đua 2 người
 - 🌙 Light mode
 - 🗄️ SQLite cho scalability (ngân hàng câu hỏi lớn)
