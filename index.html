@@ -145,6 +145,75 @@
             .sheet-group-labels { gap: 4px !important; }
             .sheet-checkbox-inline { padding: 4px 8px !important; font-size: 0.8em !important; }
         }
+        
+        /* Search + Filter */
+        .search-section { margin-top: 12px; }
+        .search-bar-wrapper { position: relative; }
+        #searchInput {
+            width: 100%; padding: 10px 40px 10px 14px;
+            border: 2px solid #475569; border-radius: 10px;
+            font-size: 0.95em; background: #0f172a; color: #cbd5e1;
+            transition: border-color 0.3s;
+        }
+        #searchInput:focus { border-color: #818cf8; outline: none; }
+        #searchInput::placeholder { color: #64748b; }
+        .search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #64748b; cursor: pointer;
+            font-size: 1.2em; padding: 4px 8px; border-radius: 6px;
+            transition: color 0.2s;
+        }
+        .search-clear:hover { color: #f87171; }
+        .search-results-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 10px 0 6px; font-size: 0.85em; color: #94a3b8;
+        }
+        .search-results-header .result-count { color: #818cf8; font-weight: 600; }
+        .search-results-list {
+            max-height: 300px; overflow-y: auto; border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        .search-result-item {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 8px 12px; border-bottom: 1px solid #1e293b;
+            cursor: pointer; transition: background 0.15s;
+            font-size: 0.88em;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: #1e293b; }
+        .search-result-item.selected { background: #1e3a5f; }
+        .search-result-item input[type="checkbox"] {
+            margin-top: 3px; flex-shrink: 0; accent-color: #818cf8;
+        }
+        .search-result-content { flex: 1; min-width: 0; }
+        .search-result-text { color: #cbd5e1; line-height: 1.4; word-break: break-word; }
+        .search-result-text mark {
+            background: #4c1d95; color: #fcd34d; padding: 0 2px; border-radius: 3px;
+        }
+        .search-result-meta {
+            display: flex; gap: 6px; margin-top: 3px; align-items: center;
+        }
+        .search-result-num { color: #64748b; font-size: 0.85em; }
+        .search-no-results {
+            padding: 20px; text-align: center; color: #64748b; font-size: 0.9em;
+        }
+        .search-actions {
+            display: flex; gap: 8px; margin-top: 8px; justify-content: center;
+        }
+        .search-start-btn {
+            background: linear-gradient(135deg, #4c1d95, #6d28d9);
+            color: #fcd34d; border: 2px solid #7c3aed;
+            padding: 10px 24px; border-radius: 25px; font-size: 1em;
+            font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .search-start-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(124,58,237,0.4); }
+        .search-start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        /* Mobile search */
+        @media (max-width: 600px) {
+            .search-results-list { max-height: 200px; }
+            .search-result-item { padding: 6px 10px; font-size: 0.82em; }
+        }
     </style>
 </head>
 <body>
@@ -189,6 +258,22 @@
                     <button id="modeKipTruongBtn" class="mode-btn mode-inactive" onclick="setMode('kip_truong')" style="display: inline-block !important; padding: 14px 35px; border: 2px solid #ddd; border-radius: 12px; cursor: pointer; font-size: 1.1em; font-weight: 700; transition: all 0.3s;">
                         🎖️ Kíp Trưởng
                     </button>
+                </div>
+                <!-- Search bar -->
+                <div class="search-section" id="searchSection" style="display:none; margin-top: 12px;">
+                    <div class="search-bar-wrapper">
+                        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm theo từ khóa..." autocomplete="off">
+                        <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">✕</button>
+                    </div>
+                    <div class="search-results-header" id="searchResultsHeader" style="display:none;">
+                        <span>Kết quả tìm kiếm</span>
+                        <span class="result-count" id="searchResultCount">0</span>
+                    </div>
+                    <div class="search-results-list" id="searchResultsList" style="display:none;"></div>
+                    <div class="search-actions" id="searchActions" style="display:none;">
+                        <button class="search-start-btn" id="searchStartBtn" onclick="startQuizFromSearch()">🚀 Làm quiz từ kết quả</button>
+                        <button class="btn btn-secondary" onclick="clearSearchAndSelection()" style="padding:10px 20px; font-size:0.95em;">❌ Bỏ chọn</button>
+                    </div>
                 </div>
                 <!-- Luyện tập câu sai & Xem lịch sử -->
                 <div style="text-align: center; margin-top: 12px; display: flex; justify-content: center; gap: 12px;">
@@ -406,6 +491,167 @@ function updateTotal() {
 }
 
 function shuffle(array) { const arr = [...array]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+// ============ SEARCH + FILTER ============
+let searchResults = [];
+let selectedSearchKeys = new Set();
+let searchDebounceTimer = null;
+
+function debounce(fn, delay) {
+    return function(...args) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlightText(text, query) {
+    if (!query) return escapeHtml(text);
+    const escaped = escapeHtml(text);
+    const qEscaped = escapeHtml(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp('(' + qEscaped + ')', 'gi');
+    return escaped.replace(regex, '<mark>$1</mark>');
+}
+
+function searchQuestions(query) {
+    if (!query || query.trim() === '') return [];
+    const q = query.trim().toLowerCase();
+    return embeddedQuestions.filter(function(item) {
+        if (item.mode !== currentMode) return false;
+        const text = (item.text || '').toLowerCase();
+        const options = Object.values(item.options || {}).join(' ').toLowerCase();
+        return text.includes(q) || options.includes(q);
+    });
+}
+
+function renderSearchResults(results) {
+    const list = document.getElementById('searchResultsList');
+    const header = document.getElementById('searchResultsHeader');
+    const count = document.getElementById('searchResultCount');
+    const actions = document.getElementById('searchActions');
+    const clear = document.getElementById('searchClear');
+    
+    if (!list) return;
+    
+    const query = document.getElementById('searchInput') ? document.getElementById('searchInput').value.trim() : '';
+    
+    if (results.length === 0) {
+        list.style.display = 'block';
+        list.innerHTML = '<div class="search-no-results">🔍 Không tìm thấy câu hỏi nào phù hợp</div>';
+        header.style.display = 'none';
+        actions.style.display = 'none';
+        clear.style.display = query ? 'block' : 'none';
+        return;
+    }
+    
+    list.style.display = 'block';
+    header.style.display = 'flex';
+    count.textContent = results.length + ' câu';
+    clear.style.display = 'block';
+    
+    // Limit display to first 200 results for performance
+    const displayResults = results.slice(0, 200);
+    
+    list.innerHTML = displayResults.map(function(item, idx) {
+        const key = item.mode + '_' + item.sheet + '_' + item.number;
+        const isSelected = selectedSearchKeys.has(key);
+        const modeColor = item.mode === 'vhf' ? 'vhf' : item.mode === 'radar' ? 'radar' : 'kip_truong';
+        const modeIcon = item.mode === 'vhf' ? '📡' : item.mode === 'radar' ? '📟' : '🎖️';
+        const displayText = item.text.length > 150 ? item.text.substring(0, 150) + '...' : item.text;
+        return '<div class="search-result-item' + (isSelected ? ' selected' : '') + '" data-key="' + escapeHtml(key) + '" onclick="toggleSearchResult(\'' + escapeHtml(key) + '\')">' +
+            '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleSearchResult(\'' + escapeHtml(key) + '\')">' +
+            '<div class="search-result-content">' +
+            '<div class="search-result-text">' + highlightText(displayText, query) + '</div>' +
+            '<div class="search-result-meta">' +
+            '<span class="search-result-num">#' + item.number + '</span>' +
+            '<span class="sheet-badge ' + modeColor + '">' + modeIcon + ' ' + escapeHtml(item.sheet) + '</span>' +
+            '</div></div></div>';
+    }).join('') +
+    (results.length > 200 ? '<div class="search-no-results">... và ' + (results.length - 200) + ' kết quả nữa. Tìm cụ thể hơn để xem tất cả.</div>' : '');
+    
+    // Show start button if any results selected
+    actions.style.display = selectedSearchKeys.size > 0 ? 'flex' : 'none';
+}
+
+function toggleSearchResult(key) {
+    if (selectedSearchKeys.has(key)) {
+        selectedSearchKeys.delete(key);
+    } else {
+        selectedSearchKeys.add(key);
+    }
+    // Update visual state
+    const item = document.querySelector('.search-result-item[data-key="' + key + '"]');
+    if (item) {
+        item.classList.toggle('selected', selectedSearchKeys.has(key));
+        const cb = item.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = selectedSearchKeys.has(key);
+    }
+    // Toggle start button
+    document.getElementById('searchActions').style.display =
+        selectedSearchKeys.size > 0 ? 'flex' : 'none';
+}
+
+function startQuizFromSearch() {
+    if (selectedSearchKeys.size === 0) return;
+    const selected = embeddedQuestions.filter(function(q) {
+        const key = q.mode + '_' + q.sheet + '_' + q.number;
+        return selectedSearchKeys.has(key);
+    });
+    quizQuestions = shuffle(selected);
+    totalQuizCount = quizQuestions.length;
+    userAnswers = [];
+    currentQuestionIndex = 0;
+    quizQuestions.forEach(function(q) { q.displayOptions = { A: q.options.A, B: q.options.B, C: q.options.C, D: q.options.D }; q.correctKey = q.correct; });
+    const modeTitleMap = { vhf: 'VHF', radar: 'Radar', kip_truong: 'Kíp Trưởng' };
+    document.getElementById('currentModeTitle').textContent = modeTitleMap[currentMode] + ' (Tìm kiếm)';
+    showSection('quiz');
+    const timerMins = parseInt(document.getElementById('timerMinutes').value) || 0;
+    startTimer(timerMins);
+    if (quizViewModePreference === 'one') {
+        setQuizView('one');
+    } else {
+        renderQuiz();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    searchResults = [];
+    clearSearchAndSelection();
+    document.getElementById('searchClear').style.display = 'none';
+    document.getElementById('searchResultsList').style.display = 'none';
+    document.getElementById('searchResultsHeader').style.display = 'none';
+    document.getElementById('searchActions').style.display = 'none';
+}
+
+function clearSearchAndSelection() {
+    searchResults = [];
+    selectedSearchKeys.clear();
+    document.getElementById('searchResultsList').innerHTML = '';
+    document.getElementById('searchResultsHeader').style.display = 'none';
+    document.getElementById('searchActions').style.display = 'none';
+    document.getElementById('searchResultsList').style.display = 'none';
+}
+
+function handleSearch() {
+    const query = document.getElementById('searchInput').value;
+    searchResults = searchQuestions(query);
+    renderSearchResults(searchResults);
+}
+
+// Debounced search input handler
+var debouncedSearch = debounce(handleSearch, 300);
+
+document.addEventListener('DOMContentLoaded', function() {
+    var searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', debouncedSearch);
+    }
+});
 
 // ============ TIMER ============
 let timerInterval = null;
@@ -753,6 +999,7 @@ document.getElementById('backToStartBtn').addEventListener('click', function() {
     quizQuestions = []; userAnswers = []; totalQuizCount = 0;
     reviewVisible = false;
     document.getElementById('questionCount').value = 50;
+    clearSearch();
     showSection('upload'); window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
@@ -892,6 +1139,10 @@ function setMode(mode) {
     updateNoRepeatInfo();
     updateStepVisibility();
     updateWrongCountDisplay();
+    // Show search section when mode is selected
+    document.getElementById('searchSection').style.display = 'block';
+    // Clear previous search
+    clearSearch();
 }
 
 function renderSheetGroups() {
