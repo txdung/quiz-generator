@@ -354,13 +354,13 @@
                                 <!-- Collapsible header -->
                 <div class="sheet-toggle-header" onclick="toggleSheetSection()">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <span class="sheet-toggle-arrow collapsed" id="sheetToggleArrow">▼</span>
+                        <span class="sheet-toggle-arrow" id="sheetToggleArrow" style="transform: rotate(-90deg);">▼</span>
                         <span style="font-size:0.9em;font-weight:600;color:#cbd5e1;">📋 Chọn sheet làm bài</span>
                     </div>
                     <span style="font-size:0.8em;color:#818cf8;">Nhấn để mở rộng</span>
                 </div>
                 <!-- Collapsible content (collapsed by default) -->
-                <div class="sheet-content collapsed" id="sheetContent" style="max-height:0 !important;opacity:0;padding:0;">
+                <div class="sheet-content" id="sheetContent" style="max-height: 0; opacity: 0; padding: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                     <div style="font-size: 0.85em; color: #94a3b8;">Tick vào các sheet muốn làm quiz</div>
                     <div style="display: flex; gap: 8px;">
@@ -1368,15 +1368,35 @@ function toggleAllModeSheets(selectAll) {
 function toggleSheetSection() {
     const content = document.getElementById('sheetContent');
     const arrow = document.getElementById('sheetToggleArrow');
-    content.classList.toggle('collapsed');
-    arrow.classList.toggle('collapsed');
+    const isExpanded = content.style.maxHeight && content.style.maxHeight !== '0px';
+    
+    if (!isExpanded) {
+        // Expand: temporarily allow measurement, then animate
+        content.style.maxHeight = 'none';
+        content.style.opacity = '1';
+        content.style.padding = '8px 0';
+        const scrollH = content.scrollHeight;
+        content.style.maxHeight = '0px';
+        // Force reflow for animation
+        content.offsetHeight;
+        content.style.maxHeight = scrollH + 'px';
+        arrow.style.transform = 'rotate(0deg)';
+        arrow.style.display = 'inline-block';
+    } else {
+        // Collapse
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        content.style.padding = '0';
+        arrow.style.transform = 'rotate(-90deg)';
+    }
+    
     // Update hint text
     const header = content.previousElementSibling;
     const hint = header.querySelector('span:last-child');
-    if (content.classList.contains('collapsed')) {
-        hint.textContent = 'Nhấn để mở rộng';
-    } else {
+    if (!isExpanded) {
         hint.textContent = 'Nhấn để thu gọn';
+    } else {
+        hint.textContent = 'Nhấn để mở rộng';
     }
 }
 
