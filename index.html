@@ -214,6 +214,60 @@
             .search-results-list { max-height: 200px; }
             .search-result-item { padding: 6px 10px; font-size: 0.82em; }
         }
+        
+        /* Correction reporting */
+        .correction-report-btn {
+            background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
+            padding: 4px 12px; border-radius: 15px; font-size: 0.8em;
+            cursor: pointer; transition: all 0.2s; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .correction-report-btn:hover { background: #991b1b; transform: translateY(-1px); }
+        .correction-report-btn.reported { background: #166534; color: #86efac; border-color: #15803d; }
+        .correction-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .correction-modal-overlay.active { display: flex; }
+        .correction-modal {
+            background: #1e293b; border-radius: 16px; padding: 24px;
+            max-width: 420px; width: 90%; border: 2px solid #334155;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .correction-modal h3 { color: #fca5a5; margin-bottom: 12px; font-size: 1.1em; }
+        .correction-modal .modal-question {
+            color: #cbd5e1; font-size: 0.9em; margin-bottom: 16px;
+            padding: 12px; background: #0f172a; border-radius: 8px;
+            border: 1px solid #334155;
+        }
+        .correction-option-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .correction-option {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; background: #0f172a; border: 2px solid #334155;
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+        }
+        .correction-option:hover { border-color: #818cf8; background: #1e293b; }
+        .correction-option input[type="radio"] { accent-color: #f87171; }
+        .correction-option label { color: #cbd5e1; cursor: pointer; flex: 1; }
+        .correction-modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .correction-modal-buttons .btn { padding: 8px 20px; font-size: 0.9em; }
+        
+        /* Corrections panel */
+        .corrections-panel {
+            display: none; position: fixed; top: 0; right: 0; bottom: 0;
+            width: 400px; max-width: 100vw; background: #1e293b;
+            border-left: 2px solid #334155; z-index: 999;
+            overflow-y: auto; padding: 20px;
+        }
+        .corrections-panel.active { display: block; }
+        .corrections-panel h3 { color: #f87171; margin-bottom: 12px; }
+        .correction-log-item {
+            padding: 10px; background: #0f172a; border-radius: 8px;
+            margin-bottom: 8px; border: 1px solid #334155;
+        }
+        .correction-log-item .log-question { color: #cbd5e1; font-size: 0.85em; margin-bottom: 4px; }
+        .correction-log-item .log-answer { font-size: 0.8em; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -946,6 +1000,7 @@ function buildReview() {
         else { badge = `<span class="answer-badge wrong">❌ Sai</span>`; }
         const qKey = q.mode + '_' + q.sheet + '_' + q.number;
         const isBookmarked = bookmarkedQuestionKeys.has(qKey);
+        const isReported = correctionLog.some(c => c.key === qKey);
         let optionsHTML = '';
         ['A', 'B', 'C', 'D'].forEach(key => {
             let labelClass = 'disabled';
@@ -953,7 +1008,14 @@ function buildReview() {
             if (key === ua.selectedIndex && key !== q.correctKey) { labelClass += ' incorrect-answer'; }
             optionsHTML += `<li class="option-item"><label class="${labelClass}"><span><strong>${key}.</strong> ${q.displayOptions[key]} ${key === q.correctKey ? '✅' : ''} ${key === ua.selectedIndex && key !== q.correctKey ? '❌ (Câu bạn chọn)' : ''}</span></label></li>`;
         });
-        card.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"><div class="question-number">Câu ${q.number || index + 1}</div><span class="sheet-badge ${q.mode}">${q.sheet}</span>${badge}<span style="color:#94a3b8;font-size:0.9em;">Đáp án đúng: <strong>${q.correctKey}</strong></span><button class="bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" data-key="${qKey}" onclick="toggleBookmark(quizQuestions[${index}])">${isBookmarked ? '🔖' : '📌'}</button></div><div class="question-text">${q.text}</div><ul class="options-list">${optionsHTML}</ul>`;
+        // Correction report button (only for wrong/unanswered questions not yet reported)
+        let correctionBtn = '';
+        if ((ua.selectedIndex !== q.correctKey) && !isReported) {
+            correctionBtn = `<button class="correction-report-btn" onclick="openCorrectionModal(${index})">⚠️ Báo đáp án sai</button>`;
+        } else if (isReported) {
+            correctionBtn = `<button class="correction-report-btn reported" disabled>✓ Đã báo</button>`;
+        }
+        card.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"><div class="question-number">Câu ${q.number || index + 1}</div><span class="sheet-badge ${q.mode}">${q.sheet}</span>${badge}<span style="color:#94a3b8;font-size:0.9em;">Đáp án đúng: <strong>${q.correctKey}</strong></span>${correctionBtn}<button class="bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" data-key="${qKey}" onclick="toggleBookmark(quizQuestions[${index}])">${isBookmarked ? '🔖' : '📌'}</button></div><div class="question-text">${q.text}</div><ul class="options-list">${optionsHTML}</ul>`;
         container.appendChild(card);
     });
 }
@@ -1361,6 +1423,123 @@ document.getElementById('viewHistoryBtn').addEventListener('click', function() {
 updateWrongCountDisplay();
     </script>
     <script>
+      // ============ CORRECTION REPORTING ============
+      let correctionLog = JSON.parse(localStorage.getItem('correctionLog') || '[]');
+      let currentCorrectionIndex = null;
+
+      function openCorrectionModal(qIndex) {
+        currentCorrectionIndex = qIndex;
+        const q = quizQuestions[qIndex];
+        const modal = document.getElementById('correctionModal');
+        document.getElementById('correctionModalQuestion').innerHTML = 
+            '<strong>' + q.number + '</strong> - ' + q.sheet + '<br>' +
+            '<span style="font-size:0.9em;color:#64748b;">Đáp án gốc: ' + q.correctKey + '</span><br>' +
+            '<span style="font-size:0.95em;margin-top:4px;display:block;">' + q.text + '</span>';
+        document.getElementById('optA').textContent = q.options.A || '';
+        document.getElementById('optB').textContent = q.options.B || '';
+        document.getElementById('optC').textContent = q.options.C || '';
+        document.getElementById('optD').textContent = q.options.D || '';
+        // Reset radio
+        const radios = document.querySelectorAll('input[name="correctAnswer"]');
+        radios.forEach(r => r.checked = false);
+        modal.classList.add('active');
+      }
+
+      function closeCorrectionModal() {
+        document.getElementById('correctionModal').classList.remove('active');
+        currentCorrectionIndex = null;
+      }
+
+      function submitCorrection() {
+        const selected = document.querySelector('input[name="correctAnswer"]:checked');
+        if (!selected) { alert('Vui lòng chọn đáp án đúng!'); return; }
+        const q = quizQuestions[currentCorrectionIndex];
+        const correction = {
+            key: q.mode + '_' + q.sheet + '_' + q.number,
+            number: q.number,
+            sheet: q.sheet,
+            mode: q.mode,
+            original: q.correctKey,
+            corrected: selected.value,
+            question: q.text,
+            timestamp: new Date().toISOString()
+        };
+        // Add to log (avoid duplicates by key)
+        const existingIdx = correctionLog.findIndex(c => c.key === correction.key);
+        if (existingIdx >= 0) {
+            correctionLog[existingIdx] = correction;
+        } else {
+            correctionLog.push(correction);
+        }
+        localStorage.setItem('correctionLog', JSON.stringify(correctionLog));
+        closeCorrectionModal();
+        // Refresh review to show "Đã báo"
+        buildReview();
+        alert('✅ Đã ghi nhận! Bạn có thể export corrections.json khi cần.');
+      }
+
+      function exportCorrections() {
+        if (correctionLog.length === 0) { alert('Không có corrections để export!'); return; }
+        // Group by mode for clarity
+        const grouped = {};
+        correctionLog.forEach(c => {
+            if (!grouped[c.mode]) grouped[c.mode] = [];
+            grouped[c.mode].push({
+                pattern: c.question.substring(0, 60) + '...*',
+                new_correct: c.corrected,
+                note: c.mode + ' #' + c.number + ' [' + c.sheet + '] original=' + c.original
+            });
+        });
+        const json = JSON.stringify(grouped, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'corrections_export.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function clearCorrections() {
+        if (confirm('Xóa toàn bộ lịch sử báo đáp án sai?')) {
+            correctionLog = [];
+            localStorage.setItem('correctionLog', '[]');
+            buildReview();
+            document.getElementById('correctionsList').innerHTML = '';
+        }
+      }
+
+      function openCorrectionsPanel() {
+        const panel = document.getElementById('correctionsPanel');
+        const list = document.getElementById('correctionsList');
+        if (correctionLog.length === 0) {
+            list.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">Chưa có corrections nào.</div>';
+        } else {
+            list.innerHTML = correctionLog.map(c => 
+                '<div class="correction-log-item">' +
+                '<div class="log-question">#' + c.number + ' [' + c.sheet + '] ' + (c.question || '').substring(0, 80) + '</div>' +
+                '<div class="log-answer">❌ ' + c.original + ' → ✅ ' + c.corrected + ' — ' + new Date(c.timestamp).toLocaleString('vi-VN') + '</div>' +
+                '</div>'
+            ).join('');
+        }
+        panel.classList.add('active');
+      }
+
+      function closeCorrectionsPanel() {
+        document.getElementById('correctionsPanel').classList.remove('active');
+      }
+
+      // Add corrections button to mode selection area
+      document.addEventListener('DOMContentLoaded', function() {
+        const modeBox = document.getElementById('modeSelectionBox');
+        if (modeBox) {
+            const correctionsBtn = document.createElement('div');
+            correctionsBtn.style.cssText = 'text-align:center;margin-top:8px;';
+            correctionsBtn.innerHTML = '<button class="btn btn-secondary" id="correctionsBtn" onclick="openCorrectionsPanel()" style="padding:8px 20px;font-size:0.9em;">⚠️ Corrections (' + correctionLog.length + ')</button>';
+            modeBox.appendChild(correctionsBtn);
+        }
+      });
+
       // ============ PWA INSTALL PROMPT + SERVICE WORKER ============
       let deferredPrompt = null;
       const installPrompt = document.getElementById('installPrompt');
@@ -1415,5 +1594,37 @@ updateWrongCountDisplay();
         });
       }
     </script>
+    
+    <!-- Correction Modal -->
+    <div class="correction-modal-overlay" id="correctionModal">
+      <div class="correction-modal">
+        <h3>⚠️ Báo đáp án sai</h3>
+        <div class="modal-question" id="correctionModalQuestion"></div>
+        <p style="color:#94a3b8;font-size:0.9em;margin-bottom:10px;">Chọn đáp án đúng:</p>
+        <div class="correction-option-group" id="correctionOptions">
+          <label class="correction-option"><input type="radio" name="correctAnswer" value="A"> <label>A. <span id="optA"></span></label></label>
+          <label class="correction-option"><input type="radio" name="correctAnswer" value="B"> <label>B. <span id="optB"></span></label></label>
+          <label class="correction-option"><input type="radio" name="correctAnswer" value="C"> <label>C. <span id="optC"></span></label></label>
+          <label class="correction-option"><input type="radio" name="correctAnswer" value="D"> <label>D. <span id="optD"></span></label></label>
+        </div>
+        <div class="correction-modal-buttons">
+          <button class="btn btn-secondary" onclick="closeCorrectionModal()">Hủy</button>
+          <button class="btn btn-danger" onclick="submitCorrection()">✅ Xác nhận</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Corrections Panel -->
+    <div class="corrections-panel" id="correctionsPanel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="color:#f87171;">⚠️ Lịch sử báo đáp án sai</h3>
+        <button class="btn btn-secondary" onclick="closeCorrectionsPanel()" style="padding:6px 16px;">✕ Đóng</button>
+      </div>
+      <div id="correctionsList"></div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #334155;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-danger" onclick="exportCorrections()" style="padding:8px 16px;font-size:0.9em;">📤 Export corrections.json</button>
+        <button class="btn btn-secondary" onclick="clearCorrections()" style="padding:8px 16px;font-size:0.9em;">🗑️ Xóa lịch sử</button>
+      </div>
+    </div>
 </body>
 </html>
