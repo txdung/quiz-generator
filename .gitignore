@@ -11,17 +11,26 @@ MEMORY.md
 graphify-out/
 
 # Build scripts (local only)
-rebuild.py
 rebuild2.py
-add_radar.js
+rebuild_v3.py
 
 # Question JSON (large, embedded in HTML already)
 all_questions.json
 
-# Session notes
+# Session notes (ignored except project docs)
 SESSION_*.md
-CHANGES_LOG.md
-PROJECT_SUMMARY.md
+
+# Debug and temp files
+debug/
+debug_kip/
+find/
+rebuild/
+nul
+debug_*.py
 
 # Pi agent internals
 .pi/
+
+# OS files
+.DS_Store
+Thumbs.db

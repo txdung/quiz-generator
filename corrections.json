@@ -1,0 +1,20 @@
+{
+  "description": "Special fixes for questions with incorrect answers in source Excel files. Applied automatically during rebuild.",
+  "fixes": [
+    {
+      "pattern": "Băng tần S.*sơ cấp tiếp cận",
+      "new_correct": "D",
+      "note": "PSR #45 — S-band primary approach radar — answer key corrected"
+    },
+    {
+      "pattern": "ISLS.*không trả lời",
+      "new_correct": "D",
+      "note": "SSR question with ISLS not responding — answer key corrected"
+    },
+    {
+      "pattern": "RXG.*Ngu",
+      "new_correct": "C",
+      "note": "Indra question about RXG source — answer key corrected"
+    }
+  ]
+}
